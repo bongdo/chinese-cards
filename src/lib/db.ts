@@ -1,7 +1,7 @@
 import * as SQLite from 'expo-sqlite';
 
 import type { Card, Changes } from '../types';
-import { nextSchedule } from './scheduler';
+import { nextSchedule, type Schedule } from './scheduler';
 
 type Row = {
   id: string;
@@ -217,10 +217,16 @@ export async function dueSummary(now = Date.now()): Promise<{ total: number; due
   return { total: row?.total ?? 0, due: row?.due ?? 0 };
 }
 
-export async function applyReview(cardId: string, known: boolean, now = Date.now()): Promise<void> {
+export async function applyReview(
+  cardId: string,
+  known: boolean,
+  now = Date.now(),
+): Promise<Schedule> {
   const database = await db();
   const row = await database.getFirstAsync<Row>('SELECT * FROM cards WHERE id = ?', cardId);
-  if (!row) return;
+  if (!row) {
+    return { box: 0, due_at: now, lapses: 0, reps: 0 };
+  }
 
   const next = nextSchedule(
     { box: row.box, due_at: row.due_at, lapses: row.lapses, reps: row.reps },
@@ -244,6 +250,7 @@ export async function applyReview(cardId: string, known: boolean, now = Date.now
       known ? 1 : 0,
     );
   });
+  return next;
 }
 
 export async function allCards(search: string, limit = 300): Promise<Card[]> {

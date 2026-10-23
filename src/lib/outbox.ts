@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import type { Config } from '../types';
 import { api } from './api';
+import type { Schedule } from './scheduler';
 
 const KEY = 'chinese.outbox.v1';
 const LIMIT = 500;
@@ -11,6 +12,7 @@ export type Pending = {
   known: boolean;
   elapsed_ms: number;
   at: number;
+  schedule?: Schedule;
 };
 
 async function read(): Promise<Pending[]> {
@@ -46,7 +48,7 @@ export async function flush(config: Config): Promise<{ sent: number; left: numbe
   let sent = 0;
   for (const item of items) {
     try {
-      await api.review(config, item.card_id, item.known, item.elapsed_ms);
+      await api.review(config, item.card_id, item.known, item.elapsed_ms, item.schedule);
       sent++;
     } catch {
       failed.push(item);

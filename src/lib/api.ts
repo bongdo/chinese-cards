@@ -1,5 +1,6 @@
 import type { Card, Changes, Config } from '../types';
 import { baseUrls } from './config';
+import type { Schedule } from './scheduler';
 
 export class ApiError extends Error {
   status: number;
@@ -76,13 +77,21 @@ async function once<T>(
 export const api = {
   health: (config: Config) => request<{ ok: boolean }>(config, '/api/health'),
 
-  review: (config: Config, cardId: string, known: boolean, elapsedMs: number) =>
+  review: (config: Config, cardId: string, known: boolean, elapsedMs: number, schedule?: Schedule) =>
     request<{ card: Card; interval: string }>(config, '/api/review', {
       method: 'POST',
       body: JSON.stringify({
         card_id: cardId,
         known,
         elapsed_ms: Math.max(0, Math.round(elapsedMs)),
+        ...(schedule
+          ? {
+              box: schedule.box,
+              due_at: schedule.due_at,
+              lapses: schedule.lapses,
+              reps: schedule.reps,
+            }
+          : {}),
       }),
     }),
 

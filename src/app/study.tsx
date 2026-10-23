@@ -105,10 +105,13 @@ export default function StudyScreen() {
         known ? Haptics.ImpactFeedbackStyle.Light : Haptics.ImpactFeedbackStyle.Rigid,
       );
 
-      void applyReview(card.id, known).catch(() => {});
-      api.review(loadConfig(), card.id, known, elapsed).catch(() => {
-        void enqueue({ card_id: card.id, known, elapsed_ms: elapsed });
-      });
+      void applyReview(card.id, known)
+        .then((schedule) => {
+          api.review(loadConfig(), card.id, known, elapsed, schedule).catch(() => {
+            void enqueue({ card_id: card.id, known, elapsed_ms: elapsed, schedule });
+          });
+        })
+        .catch(() => {});
 
       const next = afterAnswer(queue, known);
       setQueue(next.queue);
