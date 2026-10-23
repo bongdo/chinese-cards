@@ -12,6 +12,7 @@ export type Pending = {
   known: boolean;
   elapsed_ms: number;
   at: number;
+  event_id?: string;
   schedule?: Schedule;
 };
 
@@ -48,7 +49,7 @@ export async function flush(config: Config): Promise<{ sent: number; left: numbe
   let sent = 0;
   for (const item of items) {
     try {
-      await api.review(config, item.card_id, item.known, item.elapsed_ms, item.schedule);
+      await api.review(config, item.card_id, item.known, item.elapsed_ms, item.schedule, item.event_id);
       sent++;
     } catch {
       failed.push(item);

@@ -77,13 +77,14 @@ async function once<T>(
 export const api = {
   health: (config: Config) => request<{ ok: boolean }>(config, '/api/health'),
 
-  review: (config: Config, cardId: string, known: boolean, elapsedMs: number, schedule?: Schedule) =>
+  review: (config: Config, cardId: string, known: boolean, elapsedMs: number, schedule?: Schedule, eventId?: string) =>
     request<{ card: Card; interval: string }>(config, '/api/review', {
       method: 'POST',
       body: JSON.stringify({
         card_id: cardId,
         known,
         elapsed_ms: Math.max(0, Math.round(elapsedMs)),
+        ...(eventId ? { event_id: eventId } : {}),
         ...(schedule
           ? {
               box: schedule.box,
