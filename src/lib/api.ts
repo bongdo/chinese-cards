@@ -1,5 +1,5 @@
 import type { Card, Changes, Config } from '../types';
-import { baseUrls } from './config';
+import { API_URL } from './config';
 import type { Schedule } from './scheduler';
 
 export class ApiError extends Error {
@@ -14,35 +14,12 @@ export class ApiError extends Error {
 
 const TIMEOUT_MS = 8000;
 
-let preferred = 0;
-
 async function request<T>(config: Config, path: string, init?: RequestInit): Promise<T> {
-  let lastError: unknown = null;
-  for (let attempt = 0; attempt < baseUrls.length; attempt++) {
-    const index = (preferred + attempt) % baseUrls.length;
-    try {
-      const result = await once<T>(baseUrls[index], config, path, init);
-      preferred = index;
-      return result;
-    } catch (error) {
-      lastError = error;
-      if (error instanceof ApiError && error.status > 0) throw error;
-    }
-  }
-  throw lastError instanceof Error ? lastError : new ApiError('Нет связи с сервером', 0);
-}
-
-async function once<T>(
-  base: string,
-  config: Config,
-  path: string,
-  init?: RequestInit,
-): Promise<T> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
   try {
-    const response = await fetch(base.replace(/\/+$/, '') + path, {
+    const response = await fetch(API_URL.replace(/\/+$/, '') + path, {
       ...init,
       signal: controller.signal,
       headers: {
@@ -75,8 +52,6 @@ async function once<T>(
 }
 
 export const api = {
-  health: (config: Config) => request<{ ok: boolean }>(config, '/api/health'),
-
   review: (config: Config, cardId: string, known: boolean, elapsedMs: number, schedule?: Schedule, eventId?: string) =>
     request<{ card: Card; interval: string }>(config, '/api/review', {
       method: 'POST',

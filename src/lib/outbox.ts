@@ -37,10 +37,6 @@ export async function enqueue(item: Omit<Pending, 'at'>): Promise<void> {
   await write(items);
 }
 
-export async function pendingCount(): Promise<number> {
-  return (await read()).length;
-}
-
 export async function flush(config: Config): Promise<{ sent: number; left: number }> {
   const items = await read();
   if (items.length === 0) return { sent: 0, left: 0 };

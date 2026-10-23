@@ -43,6 +43,5 @@ export type Stats = {
 };
 
 export type Config = {
-  baseUrl: string;
   token: string;
 };
