@@ -95,7 +95,7 @@ export default function StudyScreen() {
   };
 
   const answer = useCallback(
-    (known: boolean) => {
+    async (known: boolean) => {
       if (!current) return;
       const elapsed = Date.now() - shownAt;
       const card = current;
@@ -106,19 +106,22 @@ export default function StudyScreen() {
       );
 
       const eventId = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
-      void applyReview(card.id, known)
-        .then((schedule) => {
-          api.review(loadConfig(), card.id, known, elapsed, schedule, eventId).catch(() => {
-            void enqueue({
-              card_id: card.id,
-              known,
-              elapsed_ms: elapsed,
-              event_id: eventId,
-              schedule,
-            });
+      try {
+        const schedule = await applyReview(card.id, known);
+        api.review(loadConfig(), card.id, known, elapsed, schedule, eventId).catch(() => {
+          void enqueue({
+            card_id: card.id,
+            known,
+            elapsed_ms: elapsed,
+            event_id: eventId,
+            schedule,
           });
-        })
-        .catch(() => {});
+        });
+      } catch {
+        pan.setValue(0);
+        setToast('ответ не сохранён, попробуй ещё раз');
+        return;
+      }
 
       const next = afterAnswer(queue, known);
       setQueue(next.queue);
@@ -135,7 +138,7 @@ export default function StudyScreen() {
       );
       setShownAt(Date.now());
     },
-    [current, queue, shownAt],
+    [current, pan, queue, shownAt],
   );
 
   const fly = useCallback(
@@ -146,7 +149,7 @@ export default function StudyScreen() {
         useNativeDriver: true,
       }).start(() => {
         pan.setValue(0);
-        answer(known);
+        void answer(known);
       });
     },
     [answer, pan, width],
