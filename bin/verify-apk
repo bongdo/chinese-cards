@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+apk="${1:?usage: bin/verify-apk <path.apk>}"
+[[ -f $apk ]] || { echo "нет файла: $apk" >&2; exit 1; }
+
+fail=0
+listing=$(unzip -l "$apk") || { echo "не читается как zip" >&2; exit 1; }
+for entry in AndroidManifest.xml classes.dex resources.arsc; do
+  grep -q " $entry\$" <<<"$listing" || { echo "нет $entry" >&2; fail=1; }
+done
+
+grep -a -q "APK Sig Block 42" "$apk" || { echo "нет подписи v2+" >&2; fail=1; }
+
+packages=$(unzip -p "$apk" AndroidManifest.xml | strings -el | tr -d '\0')
+grep -q "dev.bongdo.chinesecards" <<<"$packages" || { echo "чужой package id" >&2; fail=1; }
+
+dex=$(unzip -p "$apk" 'classes*.dex' | strings)
+for module in expo/modules/sqlite expo/modules/updates expo/modules/haptics; do
+  grep -q "$module" <<<"$dex" || { echo "в APK нет нативного модуля $module" >&2; fail=1; }
+done
+
+if [[ $fail -ne 0 ]]; then
+  echo "APK не прошёл проверку" >&2
+  exit 1
+fi
+echo "APK ok: $apk"

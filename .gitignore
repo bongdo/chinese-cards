@@ -1,0 +1,11 @@
+data/
+dist/
+.env
+*.db
+*.db-wal
+*.db-shm
+mobile/node_modules/
+mobile/.expo/
+mobile/dist/
+mobile/.env
+TODO.md

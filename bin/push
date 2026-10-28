@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+if [[ -z ${EXPO_TOKEN:-} && -f $HOME/.config/expo-token ]]; then
+  export EXPO_TOKEN
+  EXPO_TOKEN=$(tr -d '[:space:]' < "$HOME/.config/expo-token")
+fi
+
+cd mobile
+grep -q '^EXPO_PUBLIC_API_TOKEN=..*' .env || {
+  echo "в mobile/.env нет EXPO_PUBLIC_API_TOKEN: обновление уедет без токена" >&2
+  exit 1
+}
+exec npx --yes eas-cli@latest update --platform android --channel "${CHANNEL:-preview}" --environment "${ENVIRONMENT:-preview}" --message "${*:-update}"

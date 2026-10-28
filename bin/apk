@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$(dirname "$0")/.."
+root=$PWD
+
+if [[ -z ${EXPO_TOKEN:-} && -f $HOME/.config/expo-token ]]; then
+  export EXPO_TOKEN
+  EXPO_TOKEN=$(tr -d '[:space:]' < "$HOME/.config/expo-token")
+fi
+
+mkdir -p dist/apk
+id="${1:-}"
+if [[ -z $id ]]; then
+  echo "== eas build (preview, apk) =="
+  json=$("$root/bin/build-expo" --json)
+  id=$(printf '%s' "$json" | jq -r '.[0].id // empty')
+  [[ -n $id ]] || { echo "EAS не вернул id сборки: $json" >&2; exit 1; }
+  echo "build $id — ждём"
+  for _ in $(seq 1 120); do
+    status=$(cd mobile && npx --yes eas-cli@latest build:view "$id" --json | jq -r '.status')
+    case "$status" in
+      FINISHED|ERRORED|CANCELED) break ;;
+    esac
+    sleep 20
+  done
+fi
+
+json=$(cd mobile && npx --yes eas-cli@latest build:view "$id" --json)
+status=$(printf '%s' "$json" | jq -r '.status')
+url=$(printf '%s' "$json" | jq -r '.artifacts.buildUrl // empty')
+echo "build $id: $status"
+[[ -n $url ]] || { echo "артефакта нет (статус $status)" >&2; exit 1; }
+
+name="chinese-$(date +%Y%m%d-%H%M).apk"
+curl -fL --retry 3 "$url" -o "dist/apk/$name"
+"$root/bin/verify-apk" "dist/apk/$name"
+ls -lh "dist/apk/$name"
+echo "индекс: https://server-riga.tailf358cb.ts.net:10000/apk/"

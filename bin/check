@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+failed=0
+
+echo "== комментарии в коде =="
+if grep -rnE '^[[:space:]]*(//|/\*|\*)' --include='*.go' --include='*.ts' --include='*.tsx' \
+    server mobile/src 2>/dev/null | grep -vE '//go:|//line |SPDX-'; then
+  echo "FAIL: комментарии в коде запрещены" >&2
+  failed=1
+fi
+
+echo "== канон =="
+./bin/spec status || failed=1
+
+echo "== go vet =="
+(cd server && go vet ./...) || failed=1
+
+echo "== go test =="
+(cd server && go test -count=1 ./...) || failed=1
+
+echo "== mobile check =="
+(cd mobile && npm run check) || failed=1
+
+if [[ "${CHECK_FULL:-0}" == "1" ]]; then
+  echo "== expo bundle =="
+  out=$(mktemp -d)
+  (cd mobile && CI=1 npx expo export --platform android --output-dir "$out" >/dev/null) || failed=1
+  rm -rf "$out"
+fi
+
+if [[ $failed -ne 0 ]]; then
+  echo "FAIL" >&2
+  exit 1
+fi
+echo "OK"

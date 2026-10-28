@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+DECK_DIR="${DECK_DIR:-$PWD/decks}"
+DB="${DB:-$PWD/data/cards.db}"
+ADDR="${ADDR:-:8787}"
+APK_DIR="${APK_DIR:-$PWD/dist/apk}"
+
+mkdir -p "$(dirname "$DB")" "$APK_DIR"
+cd server
+exec env DECK_DIR="$DECK_DIR" DB="$DB" ADDR="$ADDR" APK_DIR="$APK_DIR" go run ./cmd/server

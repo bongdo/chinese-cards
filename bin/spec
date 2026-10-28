@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+cmd="${1:-status}"
+case "$cmd" in
+  status)
+    fail=0
+    shopt -s nullglob
+    for file in docs/product/*.md; do
+      [[ $(basename "$file") == _* ]] && continue
+      grep -q '^статус:' "$file" || { echo "нет статуса: $file" >&2; fail=1; }
+      grep -q '^источник:' "$file" || { echo "нет источника: $file" >&2; fail=1; }
+    done
+    [[ $fail -eq 0 ]] && echo "канон: ok"
+    exit $fail
+    ;;
+  bump)
+    echo "канон версионируется вместе с кодом: сохранение делает пользователь"
+    ;;
+  *)
+    echo "usage: bin/spec [status|bump]" >&2
+    exit 2
+    ;;
+esac

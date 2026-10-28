@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$(dirname "$0")/.."
+DB="${DB:-$PWD/data/cards.db}"
+[[ -f $DB ]] || { echo "нет базы: $DB (сначала bin/run)" >&2; exit 1; }
+exec sqlite3 -header -column "$DB"

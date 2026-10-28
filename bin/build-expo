@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$(dirname "$0")/../mobile"
+
+if [[ -z ${EXPO_TOKEN:-} && -f $HOME/.config/expo-token ]]; then
+  export EXPO_TOKEN
+  EXPO_TOKEN=$(tr -d '[:space:]' < "$HOME/.config/expo-token")
+fi
+
+exec npx --yes eas-cli@latest build --platform android --profile preview --non-interactive "$@"
