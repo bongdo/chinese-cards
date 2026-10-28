@@ -36,7 +36,8 @@ limits, no settings screen.
 - **Light and dark themes** — the choice survives restarts.
 - **One server per build** — the app has no server address field. The URL is
   compiled in from `EXPO_PUBLIC_API_URL`; the token from
-  `EXPO_PUBLIC_API_TOKEN`.
+  `EXPO_PUBLIC_API_TOKEN`. The checked-in fallback points at the author's
+  instance; set your own URL and token for a self-hosted deployment.
 - **Plain-text source** — decks are diffable files, not a binary Anki database.
 
 ## Deck format
